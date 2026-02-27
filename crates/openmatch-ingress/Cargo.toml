@@ -1,0 +1,27 @@
+[package]
+name = "openmatch-ingress"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Security Envelope: order ingress, SpendRight minting, risk validation, and batch sealing"
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = []
+test-helpers = ["openmatch-types/test-helpers"]
+
+[dependencies]
+openmatch-types.workspace = true
+rust_decimal.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+rand.workspace = true
+openmatch-types = { workspace = true, features = ["test-helpers"] }
+
+[lints]
+workspace = true

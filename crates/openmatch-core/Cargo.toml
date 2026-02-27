@@ -1,0 +1,30 @@
+[package]
+name = "openmatch-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Core matching engine: orderbook, batch matcher, balance manager"
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = []
+test-helpers = ["openmatch-types/test-helpers"]
+
+[dependencies]
+openmatch-types.workspace = true
+rust_decimal.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+sha2.workspace = true
+uuid.workspace = true
+serde.workspace = true
+hex.workspace = true
+
+[dev-dependencies]
+rand.workspace = true
+serde_json.workspace = true
+openmatch-types = { workspace = true, features = ["test-helpers"] }
+
+[lints]
+workspace = true
