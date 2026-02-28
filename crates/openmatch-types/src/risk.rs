@@ -106,15 +106,15 @@ pub struct RiskLimits {
 impl Default for RiskLimits {
     fn default() -> Self {
         Self {
-            max_total_exposure: Decimal::new(10_000, 0),    // 10K USDT
-            max_asset_exposure: Decimal::new(5_000, 0),     // 5K USDT per asset
+            max_total_exposure: Decimal::new(10_000, 0), // 10K USDT
+            max_asset_exposure: Decimal::new(5_000, 0),  // 5K USDT per asset
             max_open_orders: 50,
-            max_order_size: Decimal::new(1, 0),             // 1 BTC equivalent
-            max_epoch_loss: Decimal::new(500, 0),           // 500 USDT per epoch
-            max_daily_loss: Decimal::new(2_000, 0),         // 2K USDT per day
-            min_available_reserve: Decimal::new(1_000, 0),  // 1K USDT always available
+            max_order_size: Decimal::new(1, 0), // 1 BTC equivalent
+            max_epoch_loss: Decimal::new(500, 0), // 500 USDT per epoch
+            max_daily_loss: Decimal::new(2_000, 0), // 2K USDT per day
+            min_available_reserve: Decimal::new(1_000, 0), // 1K USDT always available
             max_orders_per_second: 10,
-            allow_market_orders: false,                     // conservative default
+            allow_market_orders: false, // conservative default
             max_markets: 3,
         }
     }
@@ -150,15 +150,9 @@ pub enum RiskRejectionReason {
         limit: Decimal,
     },
     /// Too many open orders.
-    OrderCountExceeded {
-        current: usize,
-        limit: usize,
-    },
+    OrderCountExceeded { current: usize, limit: usize },
     /// Order size exceeds `max_order_size`.
-    OrderTooLarge {
-        size: Decimal,
-        limit: Decimal,
-    },
+    OrderTooLarge { size: Decimal, limit: Decimal },
     /// Epoch loss limit breached.
     EpochLossBreached {
         current_loss: Decimal,
@@ -175,29 +169,38 @@ pub enum RiskRejectionReason {
         min_reserve: Decimal,
     },
     /// Order rate limit exceeded.
-    RateLimitExceeded {
-        orders_this_second: u32,
-        limit: u32,
-    },
+    RateLimitExceeded { orders_this_second: u32, limit: u32 },
     /// Market orders not allowed for this agent.
     MarketOrdersDisabled,
     /// Agent is already paused or disabled.
     AgentNotActive,
     /// Too many markets.
-    TooManyMarkets {
-        current: usize,
-        limit: usize,
-    },
+    TooManyMarkets { current: usize, limit: usize },
 }
 
 impl std::fmt::Display for RiskRejectionReason {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::ExposureCeilingBreached { current, requested, limit } => {
-                write!(f, "Total exposure {current} + {requested} would exceed limit {limit}")
+            Self::ExposureCeilingBreached {
+                current,
+                requested,
+                limit,
+            } => {
+                write!(
+                    f,
+                    "Total exposure {current} + {requested} would exceed limit {limit}"
+                )
             }
-            Self::AssetExposureBreached { asset, current, requested, limit } => {
-                write!(f, "Asset {asset} exposure {current} + {requested} would exceed limit {limit}")
+            Self::AssetExposureBreached {
+                asset,
+                current,
+                requested,
+                limit,
+            } => {
+                write!(
+                    f,
+                    "Asset {asset} exposure {current} + {requested} would exceed limit {limit}"
+                )
             }
             Self::OrderCountExceeded { current, limit } => {
                 write!(f, "Open order count {current} at limit {limit}")
@@ -205,17 +208,35 @@ impl std::fmt::Display for RiskRejectionReason {
             Self::OrderTooLarge { size, limit } => {
                 write!(f, "Order size {size} exceeds limit {limit}")
             }
-            Self::EpochLossBreached { current_loss, limit } => {
+            Self::EpochLossBreached {
+                current_loss,
+                limit,
+            } => {
                 write!(f, "Epoch loss {current_loss} exceeds limit {limit}")
             }
-            Self::DailyLossBreached { current_loss, limit } => {
+            Self::DailyLossBreached {
+                current_loss,
+                limit,
+            } => {
                 write!(f, "Daily loss {current_loss} exceeds limit {limit}")
             }
-            Self::ReserveViolation { available_after, min_reserve } => {
-                write!(f, "Available balance {available_after} would breach reserve {min_reserve}")
+            Self::ReserveViolation {
+                available_after,
+                min_reserve,
+            } => {
+                write!(
+                    f,
+                    "Available balance {available_after} would breach reserve {min_reserve}"
+                )
             }
-            Self::RateLimitExceeded { orders_this_second, limit } => {
-                write!(f, "Rate limit: {orders_this_second} orders/s exceeds {limit}")
+            Self::RateLimitExceeded {
+                orders_this_second,
+                limit,
+            } => {
+                write!(
+                    f,
+                    "Rate limit: {orders_this_second} orders/s exceeds {limit}"
+                )
             }
             Self::MarketOrdersDisabled => write!(f, "Market orders disabled for this agent"),
             Self::AgentNotActive => write!(f, "Agent is paused or disabled"),
@@ -248,7 +269,10 @@ mod tests {
     #[test]
     fn default_risk_limits_are_conservative() {
         let limits = RiskLimits::default();
-        assert!(!limits.allow_market_orders, "Market orders should be disabled by default");
+        assert!(
+            !limits.allow_market_orders,
+            "Market orders should be disabled by default"
+        );
         assert!(limits.max_total_exposure > Decimal::ZERO);
         assert!(limits.min_available_reserve > Decimal::ZERO);
         assert!(limits.max_epoch_loss > Decimal::ZERO);

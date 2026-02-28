@@ -35,19 +35,29 @@ impl SupplyConservation {
 
     /// Record a deposit.
     pub fn record_deposit(&mut self, asset: &str, amount: Decimal) {
-        *self.deposits.entry(asset.to_string()).or_insert(Decimal::ZERO) += amount;
+        *self
+            .deposits
+            .entry(asset.to_string())
+            .or_insert(Decimal::ZERO) += amount;
     }
 
     /// Record a withdrawal.
     pub fn record_withdrawal(&mut self, asset: &str, amount: Decimal) {
-        *self.withdrawals.entry(asset.to_string()).or_insert(Decimal::ZERO) += amount;
+        *self
+            .withdrawals
+            .entry(asset.to_string())
+            .or_insert(Decimal::ZERO) += amount;
     }
 
     /// Expected total supply for an asset: deposits - withdrawals.
     #[must_use]
     pub fn expected_supply(&self, asset: &str) -> Decimal {
         let deposited = self.deposits.get(asset).copied().unwrap_or(Decimal::ZERO);
-        let withdrawn = self.withdrawals.get(asset).copied().unwrap_or(Decimal::ZERO);
+        let withdrawn = self
+            .withdrawals
+            .get(asset)
+            .copied()
+            .unwrap_or(Decimal::ZERO);
         deposited - withdrawn
     }
 
@@ -64,7 +74,10 @@ impl SupplyConservation {
                     "Asset {asset}: actual supply {actual_supply} != expected {expected} \
                      (deposits={}, withdrawals={})",
                     self.deposits.get(asset).copied().unwrap_or(Decimal::ZERO),
-                    self.withdrawals.get(asset).copied().unwrap_or(Decimal::ZERO),
+                    self.withdrawals
+                        .get(asset)
+                        .copied()
+                        .unwrap_or(Decimal::ZERO),
                 ),
             });
         }
@@ -88,7 +101,10 @@ impl SupplyConservation {
     /// Total withdrawals for an asset.
     #[must_use]
     pub fn total_withdrawals(&self, asset: &str) -> Decimal {
-        self.withdrawals.get(asset).copied().unwrap_or(Decimal::ZERO)
+        self.withdrawals
+            .get(asset)
+            .copied()
+            .unwrap_or(Decimal::ZERO)
     }
 }
 
@@ -138,7 +154,10 @@ mod tests {
         let mut sc = SupplyConservation::new();
         sc.record_deposit("BTC", Decimal::new(10, 0));
         let err = sc.verify("BTC", Decimal::new(11, 0)).unwrap_err();
-        assert!(matches!(err, OpenmatchError::SupplyInvariantViolation { .. }));
+        assert!(matches!(
+            err,
+            OpenmatchError::SupplyInvariantViolation { .. }
+        ));
     }
 
     #[test]

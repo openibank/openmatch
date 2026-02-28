@@ -82,7 +82,10 @@ pub enum OpenmatchError {
     // =================================================================
     /// An operation was attempted in the wrong epoch phase.
     #[error("OM_ERR_400: Wrong epoch phase: expected {expected}, got {actual}")]
-    WrongEpochPhase { expected: EpochPhase, actual: EpochPhase },
+    WrongEpochPhase {
+        expected: EpochPhase,
+        actual: EpochPhase,
+    },
 
     /// An epoch phase timed out.
     #[error("OM_ERR_401: Epoch timeout during {phase}")]

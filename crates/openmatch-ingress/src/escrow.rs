@@ -4,13 +4,15 @@
 //! When an order is cancelled or a SR expires, it releases the funds
 //! by unfreezing them and marking the SR as RELEASED.
 
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::{
+    collections::HashMap,
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use chrono::Utc;
 use openmatch_types::{
-    EpochId, NodeId, OpenmatchError, OrderId, Result, SpendRight,
-    SpendRightId, SpendRightState, UserId,
+    EpochId, NodeId, OpenmatchError, OrderId, Result, SpendRight, SpendRightId, SpendRightState,
+    UserId,
 };
 use rust_decimal::Decimal;
 
@@ -92,11 +94,12 @@ impl EscrowManager {
         balance_manager: &mut BalanceManager,
         sr_id: SpendRightId,
     ) -> Result<()> {
-        let sr = self.spend_rights.get_mut(&sr_id).ok_or_else(|| {
-            OpenmatchError::InvalidSpendRight {
-                reason: format!("SpendRight {sr_id} not found"),
-            }
-        })?;
+        let sr =
+            self.spend_rights
+                .get_mut(&sr_id)
+                .ok_or_else(|| OpenmatchError::InvalidSpendRight {
+                    reason: format!("SpendRight {sr_id} not found"),
+                })?;
 
         if sr.state != SpendRightState::Active {
             return Err(OpenmatchError::InvalidSpendRight {
@@ -120,11 +123,12 @@ impl EscrowManager {
     /// # Errors
     /// Returns `InvalidSpendRight` if the SR doesn't exist or isn't ACTIVE.
     pub fn mark_spent(&mut self, sr_id: SpendRightId) -> Result<()> {
-        let sr = self.spend_rights.get_mut(&sr_id).ok_or_else(|| {
-            OpenmatchError::InvalidSpendRight {
-                reason: format!("SpendRight {sr_id} not found"),
-            }
-        })?;
+        let sr =
+            self.spend_rights
+                .get_mut(&sr_id)
+                .ok_or_else(|| OpenmatchError::InvalidSpendRight {
+                    reason: format!("SpendRight {sr_id} not found"),
+                })?;
 
         sr.mark_spent()
     }
@@ -140,7 +144,7 @@ impl EscrowManager {
     pub fn is_active(&self, sr_id: &SpendRightId) -> bool {
         self.spend_rights
             .get(sr_id)
-            .is_some_and(|sr| sr.is_active())
+            .is_some_and(SpendRight::is_active)
     }
 
     /// Number of SpendRights tracked.
@@ -182,7 +186,14 @@ mod tests {
         bm.deposit(user, "USDT", Decimal::new(10000, 0));
 
         let sr_id = em
-            .mint(&mut bm, OrderId::new(), user, "USDT", Decimal::new(5000, 0), EpochId(1))
+            .mint(
+                &mut bm,
+                OrderId::new(),
+                user,
+                "USDT",
+                Decimal::new(5000, 0),
+                EpochId(1),
+            )
             .unwrap();
 
         // Balance should be frozen
@@ -203,7 +214,14 @@ mod tests {
         bm.deposit(user, "USDT", Decimal::new(100, 0));
 
         let err = em
-            .mint(&mut bm, OrderId::new(), user, "USDT", Decimal::new(200, 0), EpochId(1))
+            .mint(
+                &mut bm,
+                OrderId::new(),
+                user,
+                "USDT",
+                Decimal::new(200, 0),
+                EpochId(1),
+            )
             .unwrap_err();
         assert!(matches!(err, OpenmatchError::InsufficientBalance { .. }));
 
@@ -220,7 +238,14 @@ mod tests {
         bm.deposit(user, "USDT", Decimal::new(10000, 0));
 
         let sr_id = em
-            .mint(&mut bm, OrderId::new(), user, "USDT", Decimal::new(5000, 0), EpochId(1))
+            .mint(
+                &mut bm,
+                OrderId::new(),
+                user,
+                "USDT",
+                Decimal::new(5000, 0),
+                EpochId(1),
+            )
             .unwrap();
 
         em.release(&mut bm, sr_id).unwrap();
@@ -243,7 +268,14 @@ mod tests {
         bm.deposit(user, "USDT", Decimal::new(10000, 0));
 
         let sr_id = em
-            .mint(&mut bm, OrderId::new(), user, "USDT", Decimal::new(5000, 0), EpochId(1))
+            .mint(
+                &mut bm,
+                OrderId::new(),
+                user,
+                "USDT",
+                Decimal::new(5000, 0),
+                EpochId(1),
+            )
             .unwrap();
 
         em.release(&mut bm, sr_id).unwrap();
@@ -258,7 +290,14 @@ mod tests {
         bm.deposit(user, "USDT", Decimal::new(10000, 0));
 
         let sr_id = em
-            .mint(&mut bm, OrderId::new(), user, "USDT", Decimal::new(5000, 0), EpochId(1))
+            .mint(
+                &mut bm,
+                OrderId::new(),
+                user,
+                "USDT",
+                Decimal::new(5000, 0),
+                EpochId(1),
+            )
             .unwrap();
 
         em.mark_spent(sr_id).unwrap();
@@ -275,7 +314,14 @@ mod tests {
         bm.deposit(user, "USDT", Decimal::new(10000, 0));
 
         let sr_id = em
-            .mint(&mut bm, OrderId::new(), user, "USDT", Decimal::new(5000, 0), EpochId(1))
+            .mint(
+                &mut bm,
+                OrderId::new(),
+                user,
+                "USDT",
+                Decimal::new(5000, 0),
+                EpochId(1),
+            )
             .unwrap();
 
         em.mark_spent(sr_id).unwrap();

@@ -144,10 +144,18 @@ mod tests {
     #[test]
     fn no_crossing_when_bid_below_ask() {
         let mut book = OrderBook::new(MarketPair::new("BTC", "USDT"));
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(99, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(101, 0), Decimal::ONE))
-            .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(99, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(101, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
         let result = compute_clearing_price(&book);
         assert!(result.clearing_price.is_none());
     }
@@ -155,10 +163,18 @@ mod tests {
     #[test]
     fn crossing_at_exact_price() {
         let mut book = OrderBook::new(MarketPair::new("BTC", "USDT"));
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
         let result = compute_clearing_price(&book);
         assert_eq!(result.clearing_price, Some(Decimal::new(100, 0)));
         assert_eq!(result.matchable_volume, Decimal::ONE);
@@ -168,10 +184,18 @@ mod tests {
     fn crossing_with_spread() {
         let mut book = OrderBook::new(MarketPair::new("BTC", "USDT"));
         // Bid at 102, ask at 98 → crossing, clearing at midpoint = 100
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(102, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(98, 0), Decimal::ONE))
-            .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(102, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(98, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
         let result = compute_clearing_price(&book);
         assert_eq!(result.clearing_price, Some(Decimal::new(100, 0)));
     }
@@ -198,10 +222,18 @@ mod tests {
     #[test]
     fn clearing_result_has_best_bid_ask() {
         let mut book = OrderBook::new(MarketPair::new("BTC", "USDT"));
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
         let result = compute_clearing_price(&book);
         assert_eq!(result.best_bid, Some(Decimal::new(100, 0)));
         assert_eq!(result.best_ask, Some(Decimal::new(100, 0)));

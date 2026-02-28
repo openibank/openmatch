@@ -24,6 +24,8 @@ serde.workspace = true
 serde_json.workspace = true
 rand.workspace = true
 openmatch-types = { workspace = true, features = ["test-helpers"] }
+openmatch-ingress = { workspace = true }
+openmatch-matchcore = { workspace = true }
 
 [lints]
 workspace = true

@@ -16,7 +16,7 @@ pub mod matcher;
 pub mod orderbook;
 pub mod price_level;
 
-pub use clearing::{compute_clearing_price, ClearingResult};
+pub use clearing::{ClearingResult, compute_clearing_price};
 pub use determinism::{compute_trade_root, verify_trade_root};
 pub use matcher::match_sealed_batch;
 pub use orderbook::OrderBook;

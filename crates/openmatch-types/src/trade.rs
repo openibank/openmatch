@@ -63,12 +63,7 @@ impl std::fmt::Display for Trade {
         write!(
             f,
             "Trade[{}] {} {} {} @ {} = {}",
-            self.id,
-            self.market,
-            self.taker_side,
-            self.quantity,
-            self.price,
-            self.quote_amount,
+            self.id, self.market, self.taker_side, self.quantity, self.price, self.quote_amount,
         )
     }
 }

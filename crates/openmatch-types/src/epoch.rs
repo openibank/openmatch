@@ -9,15 +9,13 @@
 //! During FINALIZE, trades are settled via the 3-tier settlement engine and
 //! SpendRights are consumed (ACTIVE → SPENT).
 
-use std::fmt;
-use std::time::Duration;
+use std::{fmt, time::Duration};
 
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use crate::constants;
-use crate::{EpochId, NodeId, Order, Trade};
+use crate::{EpochId, NodeId, Order, Trade, constants};
 
 /// The four non-overlapping phases of an epoch.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

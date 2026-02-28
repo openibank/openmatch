@@ -264,6 +264,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::cast_possible_truncation)]
     fn order_id_timestamp_extraction() {
         let before = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -275,7 +276,10 @@ mod tests {
             .unwrap()
             .as_millis() as u64;
         let ts = id.timestamp_ms();
-        assert!(ts >= before && ts <= after, "ts={ts}, before={before}, after={after}");
+        assert!(
+            ts >= before && ts <= after,
+            "ts={ts}, before={before}, after={after}"
+        );
     }
 
     #[test]

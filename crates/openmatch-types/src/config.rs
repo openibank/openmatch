@@ -1,10 +1,11 @@
 //! Configuration types for OpenMatch nodes and markets.
 
-use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 
-use crate::{constants, EpochConfig, NodeId};
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
+
+use crate::{EpochConfig, NodeId, constants};
 
 /// Configuration for a single OpenMatch node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,9 +69,9 @@ impl MarketConfig {
         Self {
             base: "BTC".to_string(),
             quote: "USDT".to_string(),
-            min_order_size: Decimal::new(1, 5),   // 0.00001 BTC
-            tick_size: Decimal::new(1, 2),         // 0.01 USDT
-            lot_size: Decimal::new(1, 5),          // 0.00001 BTC
+            min_order_size: Decimal::new(1, 5), // 0.00001 BTC
+            tick_size: Decimal::new(1, 2),      // 0.01 USDT
+            lot_size: Decimal::new(1, 5),       // 0.00001 BTC
             max_orders_per_user: constants::DEFAULT_MAX_ORDERS_PER_USER,
         }
     }
@@ -81,9 +82,9 @@ impl MarketConfig {
         Self {
             base: "ETH".to_string(),
             quote: "USDT".to_string(),
-            min_order_size: Decimal::new(1, 4),   // 0.0001 ETH
-            tick_size: Decimal::new(1, 2),         // 0.01 USDT
-            lot_size: Decimal::new(1, 4),          // 0.0001 ETH
+            min_order_size: Decimal::new(1, 4), // 0.0001 ETH
+            tick_size: Decimal::new(1, 2),      // 0.01 USDT
+            lot_size: Decimal::new(1, 4),       // 0.0001 ETH
             max_orders_per_user: constants::DEFAULT_MAX_ORDERS_PER_USER,
         }
     }

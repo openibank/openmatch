@@ -4,7 +4,7 @@
 //! are pushed into the PendingBuffer. When the SEAL phase begins, the
 //! buffer is sealed into a `SealedBatch`.
 
-use openmatch_types::{constants, OpenmatchError, Order, Result};
+use openmatch_types::{OpenmatchError, Order, Result, constants};
 
 /// Collects validated orders during the COLLECT phase.
 ///
@@ -117,17 +117,26 @@ impl Default for PendingBuffer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use openmatch_types::*;
     use rust_decimal::Decimal;
+
+    use super::*;
 
     #[test]
     fn push_and_count() {
         let mut buf = PendingBuffer::new();
-        buf.push(Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
-        buf.push(Order::dummy_limit(OrderSide::Sell, Decimal::new(101, 0), Decimal::ONE))
-            .unwrap();
+        buf.push(Order::dummy_limit(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        buf.push(Order::dummy_limit(
+            OrderSide::Sell,
+            Decimal::new(101, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
         assert_eq!(buf.len(), 2);
         assert!(!buf.is_empty());
     }
@@ -137,7 +146,11 @@ mod tests {
         let mut buf = PendingBuffer::new();
         buf.seal().unwrap();
         let err = buf
-            .push(Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
+            .push(Order::dummy_limit(
+                OrderSide::Buy,
+                Decimal::new(100, 0),
+                Decimal::ONE,
+            ))
             .unwrap_err();
         assert!(matches!(err, OpenmatchError::BufferAlreadySealed));
     }
@@ -153,12 +166,24 @@ mod tests {
     #[test]
     fn buffer_full() {
         let mut buf = PendingBuffer::with_capacity(2);
-        buf.push(Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
-        buf.push(Order::dummy_limit(OrderSide::Sell, Decimal::new(101, 0), Decimal::ONE))
-            .unwrap();
+        buf.push(Order::dummy_limit(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        buf.push(Order::dummy_limit(
+            OrderSide::Sell,
+            Decimal::new(101, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
         let err = buf
-            .push(Order::dummy_limit(OrderSide::Buy, Decimal::new(99, 0), Decimal::ONE))
+            .push(Order::dummy_limit(
+                OrderSide::Buy,
+                Decimal::new(99, 0),
+                Decimal::ONE,
+            ))
             .unwrap_err();
         assert!(matches!(err, OpenmatchError::BufferFull));
     }
@@ -166,10 +191,18 @@ mod tests {
     #[test]
     fn drain_returns_all_orders() {
         let mut buf = PendingBuffer::new();
-        buf.push(Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
-        buf.push(Order::dummy_limit(OrderSide::Sell, Decimal::new(101, 0), Decimal::ONE))
-            .unwrap();
+        buf.push(Order::dummy_limit(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        buf.push(Order::dummy_limit(
+            OrderSide::Sell,
+            Decimal::new(101, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
         buf.seal().unwrap();
         let orders = buf.drain().unwrap();
         assert_eq!(orders.len(), 2);
@@ -179,22 +212,34 @@ mod tests {
     #[test]
     fn drain_unsealed_fails() {
         let mut buf = PendingBuffer::new();
-        buf.push(Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
+        buf.push(Order::dummy_limit(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
         assert!(buf.drain().is_err());
     }
 
     #[test]
     fn reset_clears_everything() {
         let mut buf = PendingBuffer::new();
-        buf.push(Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
+        buf.push(Order::dummy_limit(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
         buf.seal().unwrap();
         buf.reset();
         assert!(buf.is_empty());
         assert!(!buf.is_sealed());
         // Should be able to push again
-        buf.push(Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
+        buf.push(Order::dummy_limit(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
     }
 }

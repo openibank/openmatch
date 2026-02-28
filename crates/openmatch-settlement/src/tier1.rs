@@ -10,13 +10,10 @@
 
 use std::collections::HashMap;
 
-use openmatch_types::{
-    Asset, BalanceEntry, OpenmatchError, Result, Trade, UserId,
-};
+use openmatch_types::{Asset, BalanceEntry, OpenmatchError, Result, Trade, UserId};
 use rust_decimal::Decimal;
 
-use crate::idempotency::IdempotencyGuard;
-use crate::supply_conservation::SupplyConservation;
+use crate::{idempotency::IdempotencyGuard, supply_conservation::SupplyConservation};
 
 /// Local atomic settler for Tier 1 (same-node) settlement.
 ///
@@ -44,21 +41,22 @@ impl Tier1Settler {
 
     /// Deposit funds for a user. Creates the balance entry if it doesn't exist.
     pub fn deposit(&mut self, user_id: UserId, asset: &str, amount: Decimal) {
-        let entry = self.balances
+        let entry = self
+            .balances
             .entry((user_id, asset.to_string()))
-            .or_insert_with(BalanceEntry::new);
+            .or_default();
         entry.available += amount;
         self.supply.record_deposit(asset, amount);
     }
 
     /// Freeze funds for an order (available → frozen).
     pub fn freeze(&mut self, user_id: UserId, asset: &str, amount: Decimal) -> Result<()> {
-        let entry = self.balances
-            .get_mut(&(user_id, asset.to_string()))
-            .ok_or(OpenmatchError::InsufficientBalance {
+        let entry = self.balances.get_mut(&(user_id, asset.to_string())).ok_or(
+            OpenmatchError::InsufficientBalance {
                 needed: amount,
                 available: Decimal::ZERO,
-            })?;
+            },
+        )?;
 
         if entry.available < amount {
             return Err(OpenmatchError::InsufficientBalance {
@@ -95,7 +93,8 @@ impl Tier1Settler {
 
         // 2. Transfer base asset: seller's frozen → buyer's available
         {
-            let seller_base = self.balances
+            let seller_base = self
+                .balances
                 .get_mut(&(seller_id, base_asset.clone()))
                 .ok_or(OpenmatchError::InsufficientFrozen)?;
             if seller_base.frozen < trade.quantity {
@@ -104,15 +103,17 @@ impl Tier1Settler {
             seller_base.frozen -= trade.quantity;
         }
         {
-            let buyer_base = self.balances
+            let buyer_base = self
+                .balances
                 .entry((buyer_id, base_asset.clone()))
-                .or_insert_with(BalanceEntry::new);
+                .or_default();
             buyer_base.available += trade.quantity;
         }
 
         // 3. Transfer quote asset: buyer's frozen → seller's available
         {
-            let buyer_quote = self.balances
+            let buyer_quote = self
+                .balances
                 .get_mut(&(buyer_id, quote_asset.clone()))
                 .ok_or(OpenmatchError::InsufficientFrozen)?;
             if buyer_quote.frozen < trade.quote_amount {
@@ -121,9 +122,10 @@ impl Tier1Settler {
             buyer_quote.frozen -= trade.quote_amount;
         }
         {
-            let seller_quote = self.balances
+            let seller_quote = self
+                .balances
                 .entry((seller_id, quote_asset.clone()))
-                .or_insert_with(BalanceEntry::new);
+                .or_default();
             seller_quote.available += trade.quote_amount;
         }
 
@@ -141,7 +143,8 @@ impl Tier1Settler {
 
     /// Verify supply conservation for a given asset.
     pub fn verify_supply(&self, asset: &str) -> Result<()> {
-        let actual: Decimal = self.balances
+        let actual: Decimal = self
+            .balances
             .iter()
             .filter(|((_, a), _)| a == asset)
             .map(|(_, entry)| entry.total())
@@ -158,9 +161,10 @@ impl Tier1Settler {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
     use openmatch_types::*;
+
+    use super::*;
 
     fn make_trade(buyer: UserId, seller: UserId) -> Trade {
         Trade {
@@ -184,13 +188,15 @@ mod tests {
     fn deposit_and_freeze() {
         let mut settler = Tier1Settler::new(100);
         let user = UserId::new();
-        settler.deposit(user, "USDT", Decimal::new(100000, 0));
+        settler.deposit(user, "USDT", Decimal::new(100_000, 0));
 
         let bal = settler.balance(user, "USDT");
-        assert_eq!(bal.available, Decimal::new(100000, 0));
+        assert_eq!(bal.available, Decimal::new(100_000, 0));
         assert_eq!(bal.frozen, Decimal::ZERO);
 
-        settler.freeze(user, "USDT", Decimal::new(50000, 0)).unwrap();
+        settler
+            .freeze(user, "USDT", Decimal::new(50000, 0))
+            .unwrap();
         let bal = settler.balance(user, "USDT");
         assert_eq!(bal.available, Decimal::new(50000, 0));
         assert_eq!(bal.frozen, Decimal::new(50000, 0));
@@ -202,7 +208,9 @@ mod tests {
         let user = UserId::new();
         settler.deposit(user, "USDT", Decimal::new(100, 0));
 
-        let err = settler.freeze(user, "USDT", Decimal::new(200, 0)).unwrap_err();
+        let err = settler
+            .freeze(user, "USDT", Decimal::new(200, 0))
+            .unwrap_err();
         assert!(matches!(err, OpenmatchError::InsufficientBalance { .. }));
     }
 
@@ -214,7 +222,9 @@ mod tests {
 
         // Setup: buyer has USDT frozen, seller has BTC frozen
         settler.deposit(buyer, "USDT", Decimal::new(50000, 0));
-        settler.freeze(buyer, "USDT", Decimal::new(50000, 0)).unwrap();
+        settler
+            .freeze(buyer, "USDT", Decimal::new(50000, 0))
+            .unwrap();
         settler.deposit(seller, "BTC", Decimal::ONE);
         settler.freeze(seller, "BTC", Decimal::ONE).unwrap();
 
@@ -242,8 +252,10 @@ mod tests {
         let buyer = UserId::new();
         let seller = UserId::new();
 
-        settler.deposit(buyer, "USDT", Decimal::new(100000, 0));
-        settler.freeze(buyer, "USDT", Decimal::new(50000, 0)).unwrap();
+        settler.deposit(buyer, "USDT", Decimal::new(100_000, 0));
+        settler
+            .freeze(buyer, "USDT", Decimal::new(50000, 0))
+            .unwrap();
         settler.deposit(seller, "BTC", Decimal::new(2, 0));
         settler.freeze(seller, "BTC", Decimal::ONE).unwrap();
 
@@ -261,7 +273,9 @@ mod tests {
         let seller = UserId::new();
 
         settler.deposit(buyer, "USDT", Decimal::new(50000, 0));
-        settler.freeze(buyer, "USDT", Decimal::new(50000, 0)).unwrap();
+        settler
+            .freeze(buyer, "USDT", Decimal::new(50000, 0))
+            .unwrap();
         settler.deposit(seller, "BTC", Decimal::ONE);
         settler.freeze(seller, "BTC", Decimal::ONE).unwrap();
 

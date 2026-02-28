@@ -50,10 +50,7 @@ impl SpendRightState {
     /// Can this SR transition to the given target state?
     #[must_use]
     pub fn can_transition_to(&self, target: Self) -> bool {
-        matches!(
-            (self, target),
-            (Self::Active, Self::Spent | Self::Released)
-        )
+        matches!((self, target), (Self::Active, Self::Spent | Self::Released))
     }
 }
 

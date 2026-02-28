@@ -12,9 +12,7 @@
 
 use std::collections::HashMap;
 
-use openmatch_types::{
-    EpochId, OpenmatchError, Order, OrderType, Result, UserId,
-};
+use openmatch_types::{EpochId, OpenmatchError, Order, OrderType, Result, UserId};
 use rust_decimal::Decimal;
 
 /// Hard risk gate that validates orders before they enter the pending buffer.
@@ -165,8 +163,9 @@ impl Default for RiskKernel {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use openmatch_types::*;
+
+    use super::*;
 
     fn make_buy(price: Decimal, qty: Decimal) -> Order {
         Order::dummy_limit(OrderSide::Buy, price, qty)

@@ -6,10 +6,12 @@
 //!
 //! An auxiliary `HashMap<OrderId, (Side, Price)>` enables O(log N) cancellation.
 
-use std::cmp::Reverse;
-use std::collections::{BTreeMap, HashMap};
+use std::{
+    cmp::Reverse,
+    collections::{BTreeMap, HashMap},
+};
 
-use openmatch_types::*;
+use openmatch_types::{MarketPair, OpenmatchError, Order, OrderId, OrderSide, Result};
 use rust_decimal::Decimal;
 
 use crate::price_level::PriceLevel;
@@ -243,14 +245,30 @@ mod tests {
     fn insert_and_query_best_bid_ask() {
         let mut book = OrderBook::new(MarketPair::new("BTC", "USDT"));
 
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(99, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(101, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(102, 0), Decimal::ONE))
-            .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(99, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(101, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(102, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
 
         assert_eq!(book.best_bid(), Some(Decimal::new(100, 0)));
         assert_eq!(book.best_ask(), Some(Decimal::new(101, 0)));
@@ -321,10 +339,18 @@ mod tests {
     #[test]
     fn drain_all_empties_book() {
         let mut book = OrderBook::new(MarketPair::new("BTC", "USDT"));
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(101, 0), Decimal::ONE))
-            .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(101, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
 
         let drained = book.drain_all();
         assert_eq!(drained.len(), 2);
@@ -336,44 +362,84 @@ mod tests {
     #[test]
     fn bid_levels_iterate_highest_first() {
         let mut book = OrderBook::new(MarketPair::new("BTC", "USDT"));
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(90, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(95, 0), Decimal::ONE))
-            .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(90, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(95, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
 
         let prices: Vec<Decimal> = book.bid_levels().map(|l| l.price).collect();
         assert_eq!(
             prices,
-            vec![Decimal::new(100, 0), Decimal::new(95, 0), Decimal::new(90, 0)]
+            vec![
+                Decimal::new(100, 0),
+                Decimal::new(95, 0),
+                Decimal::new(90, 0)
+            ]
         );
     }
 
     #[test]
     fn ask_levels_iterate_lowest_first() {
         let mut book = OrderBook::new(MarketPair::new("BTC", "USDT"));
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(110, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(101, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(105, 0), Decimal::ONE))
-            .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(110, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(101, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(105, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
 
         let prices: Vec<Decimal> = book.ask_levels().map(|l| l.price).collect();
         assert_eq!(
             prices,
-            vec![Decimal::new(101, 0), Decimal::new(105, 0), Decimal::new(110, 0)]
+            vec![
+                Decimal::new(101, 0),
+                Decimal::new(105, 0),
+                Decimal::new(110, 0)
+            ]
         );
     }
 
     #[test]
     fn mid_price_calculation() {
         let mut book = OrderBook::new(MarketPair::new("BTC", "USDT"));
-        book.insert_order(make_order(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE))
-            .unwrap();
-        book.insert_order(make_order(OrderSide::Sell, Decimal::new(102, 0), Decimal::ONE))
-            .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
+        book.insert_order(make_order(
+            OrderSide::Sell,
+            Decimal::new(102, 0),
+            Decimal::ONE,
+        ))
+        .unwrap();
         assert_eq!(book.mid_price(), Some(Decimal::new(101, 0)));
     }
 

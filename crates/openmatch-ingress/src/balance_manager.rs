@@ -30,9 +30,10 @@ impl BalanceManager {
 
     /// Deposit funds (increases available balance).
     pub fn deposit(&mut self, user_id: UserId, asset: &str, amount: Decimal) {
-        let entry = self.balances
+        let entry = self
+            .balances
             .entry((user_id, asset.to_string()))
-            .or_insert_with(BalanceEntry::new);
+            .or_default();
         entry.available += amount;
     }
 
@@ -41,12 +42,12 @@ impl BalanceManager {
     /// # Errors
     /// Returns `InsufficientBalance` if available < amount.
     pub fn freeze(&mut self, user_id: UserId, asset: &str, amount: Decimal) -> Result<()> {
-        let entry = self.balances
-            .get_mut(&(user_id, asset.to_string()))
-            .ok_or(OpenmatchError::InsufficientBalance {
+        let entry = self.balances.get_mut(&(user_id, asset.to_string())).ok_or(
+            OpenmatchError::InsufficientBalance {
                 needed: amount,
                 available: Decimal::ZERO,
-            })?;
+            },
+        )?;
 
         if entry.available < amount {
             return Err(OpenmatchError::InsufficientBalance {
@@ -65,7 +66,8 @@ impl BalanceManager {
     /// # Errors
     /// Returns `InsufficientFrozen` if frozen < amount.
     pub fn unfreeze(&mut self, user_id: UserId, asset: &str, amount: Decimal) -> Result<()> {
-        let entry = self.balances
+        let entry = self
+            .balances
             .get_mut(&(user_id, asset.to_string()))
             .ok_or(OpenmatchError::InsufficientFrozen)?;
 
@@ -83,13 +85,9 @@ impl BalanceManager {
     ///
     /// # Errors
     /// Returns `InsufficientFrozen` if frozen < amount.
-    pub fn consume_frozen(
-        &mut self,
-        user_id: UserId,
-        asset: &str,
-        amount: Decimal,
-    ) -> Result<()> {
-        let entry = self.balances
+    pub fn consume_frozen(&mut self, user_id: UserId, asset: &str, amount: Decimal) -> Result<()> {
+        let entry = self
+            .balances
             .get_mut(&(user_id, asset.to_string()))
             .ok_or(OpenmatchError::InsufficientFrozen)?;
 
@@ -103,9 +101,10 @@ impl BalanceManager {
 
     /// Credit available balance (for settlement — receiving side).
     pub fn credit(&mut self, user_id: UserId, asset: &str, amount: Decimal) {
-        let entry = self.balances
+        let entry = self
+            .balances
             .entry((user_id, asset.to_string()))
-            .or_insert_with(BalanceEntry::new);
+            .or_default();
         entry.available += amount;
     }
 
@@ -190,7 +189,8 @@ mod tests {
         let user = UserId::new();
         bm.deposit(user, "USDT", Decimal::new(1000, 0));
         bm.freeze(user, "USDT", Decimal::new(500, 0)).unwrap();
-        bm.consume_frozen(user, "USDT", Decimal::new(500, 0)).unwrap();
+        bm.consume_frozen(user, "USDT", Decimal::new(500, 0))
+            .unwrap();
         let bal = bm.balance(user, "USDT");
         assert_eq!(bal.available, Decimal::new(500, 0));
         assert_eq!(bal.frozen, Decimal::ZERO);

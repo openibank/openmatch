@@ -96,8 +96,7 @@ impl Order {
         match (self.order_type, self.side) {
             (OrderType::Limit, _) => self.price.unwrap_or(Decimal::ZERO),
             (OrderType::Market, OrderSide::Buy) => Decimal::MAX,
-            (OrderType::Market, OrderSide::Sell) => Decimal::ZERO,
-            (OrderType::Cancel, _) => Decimal::ZERO,
+            (OrderType::Market, OrderSide::Sell) | (OrderType::Cancel, _) => Decimal::ZERO,
         }
     }
 
@@ -105,19 +104,29 @@ impl Order {
     pub fn is_matchable_at(&self, price: &Decimal) -> bool {
         match self.side {
             OrderSide::Buy => self.effective_price() >= *price,
-            OrderSide::Sell => self.effective_price() <= *price || self.order_type == OrderType::Market,
+            OrderSide::Sell => {
+                self.effective_price() <= *price || self.order_type == OrderType::Market
+            }
         }
     }
 
     #[must_use]
-    pub fn is_filled(&self) -> bool { self.remaining_qty.is_zero() }
+    pub fn is_filled(&self) -> bool {
+        self.remaining_qty.is_zero()
+    }
 
     #[must_use]
-    pub fn filled_qty(&self) -> Decimal { self.quantity - self.remaining_qty }
+    pub fn filled_qty(&self) -> Decimal {
+        self.quantity - self.remaining_qty
+    }
 
     #[must_use]
     pub fn fill_ratio(&self) -> Decimal {
-        if self.quantity.is_zero() { Decimal::ZERO } else { self.filled_qty() / self.quantity }
+        if self.quantity.is_zero() {
+            Decimal::ZERO
+        } else {
+            self.filled_qty() / self.quantity
+        }
     }
 }
 
@@ -126,25 +135,46 @@ impl Order {
 impl Order {
     pub fn dummy_limit(side: OrderSide, price: Decimal, qty: Decimal) -> Self {
         Self {
-            id: OrderId::new(), user_id: UserId::new(),
-            market: MarketPair::new("BTC", "USDT"), side,
-            order_type: OrderType::Limit, status: OrderStatus::Active,
-            price: Some(price), quantity: qty, remaining_qty: qty,
-            sr_id: SpendRightId::new(), epoch_id: None,
-            origin_node: NodeId([0u8; 32]), sequence: 0,
-            created_at: Utc::now(), updated_at: Utc::now(),
+            id: OrderId::new(),
+            user_id: UserId::new(),
+            market: MarketPair::new("BTC", "USDT"),
+            side,
+            order_type: OrderType::Limit,
+            status: OrderStatus::Active,
+            price: Some(price),
+            quantity: qty,
+            remaining_qty: qty,
+            sr_id: SpendRightId::new(),
+            epoch_id: None,
+            origin_node: NodeId([0u8; 32]),
+            sequence: 0,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     }
 
-    pub fn dummy_limit_for_user(user_id: UserId, side: OrderSide, price: Decimal, qty: Decimal) -> Self {
+    pub fn dummy_limit_for_user(
+        user_id: UserId,
+        side: OrderSide,
+        price: Decimal,
+        qty: Decimal,
+    ) -> Self {
         Self {
-            id: OrderId::new(), user_id,
-            market: MarketPair::new("BTC", "USDT"), side,
-            order_type: OrderType::Limit, status: OrderStatus::Active,
-            price: Some(price), quantity: qty, remaining_qty: qty,
-            sr_id: SpendRightId::new(), epoch_id: None,
-            origin_node: NodeId([0u8; 32]), sequence: 0,
-            created_at: Utc::now(), updated_at: Utc::now(),
+            id: OrderId::new(),
+            user_id,
+            market: MarketPair::new("BTC", "USDT"),
+            side,
+            order_type: OrderType::Limit,
+            status: OrderStatus::Active,
+            price: Some(price),
+            quantity: qty,
+            remaining_qty: qty,
+            sr_id: SpendRightId::new(),
+            epoch_id: None,
+            origin_node: NodeId([0u8; 32]),
+            sequence: 0,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     }
 }
@@ -172,7 +202,8 @@ mod tests {
 
     #[test]
     fn fill_tracking() {
-        let mut order = Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::new(10, 0));
+        let mut order =
+            Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::new(10, 0));
         assert!(!order.is_filled());
         order.remaining_qty = Decimal::ZERO;
         assert!(order.is_filled());

@@ -5,9 +5,8 @@
 //! the batch hash, and produces the immutable `SealedBatch`.
 
 use chrono::Utc;
-use sha2::{Digest, Sha256};
-
 use openmatch_types::{BatchDigest, EpochId, NodeId, Order, SealedBatch};
+use sha2::{Digest, Sha256};
 
 /// Seals pending orders into an immutable `SealedBatch`.
 pub struct BatchSealer {
@@ -109,9 +108,10 @@ impl BatchSealer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use openmatch_types::*;
     use rust_decimal::Decimal;
+
+    use super::*;
 
     fn make_sealer() -> BatchSealer {
         BatchSealer::new(NodeId([0u8; 32]))
@@ -160,9 +160,11 @@ mod tests {
     #[test]
     fn different_epochs_different_hash() {
         let sealer = make_sealer();
-        let orders = vec![
-            Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE),
-        ];
+        let orders = vec![Order::dummy_limit(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        )];
 
         let batch1 = sealer.seal(EpochId(1), orders.clone());
         let batch2 = sealer.seal(EpochId(2), orders);
@@ -173,9 +175,11 @@ mod tests {
     #[test]
     fn verify_batch_hash_passes() {
         let sealer = make_sealer();
-        let orders = vec![
-            Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE),
-        ];
+        let orders = vec![Order::dummy_limit(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        )];
         let batch = sealer.seal(EpochId(1), orders);
         assert!(BatchSealer::verify_batch_hash(&batch));
     }
@@ -183,9 +187,11 @@ mod tests {
     #[test]
     fn tampered_batch_hash_fails() {
         let sealer = make_sealer();
-        let orders = vec![
-            Order::dummy_limit(OrderSide::Buy, Decimal::new(100, 0), Decimal::ONE),
-        ];
+        let orders = vec![Order::dummy_limit(
+            OrderSide::Buy,
+            Decimal::new(100, 0),
+            Decimal::ONE,
+        )];
         let mut batch = sealer.seal(EpochId(1), orders);
         batch.batch_hash[0] ^= 0xFF; // Tamper
         assert!(!BatchSealer::verify_batch_hash(&batch));

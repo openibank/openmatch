@@ -15,12 +15,12 @@
 //! against the next passive order at that level.
 
 use chrono::Utc;
-use openmatch_types::*;
+use openmatch_types::{
+    NodeId, Order, OrderSide, OrderType, SealedBatch, Trade, TradeBundle, TradeId,
+};
 use rust_decimal::Decimal;
 
-use crate::clearing::compute_clearing_price;
-use crate::determinism::compute_trade_root;
-use crate::OrderBook;
+use crate::{OrderBook, clearing::compute_clearing_price, determinism::compute_trade_root};
 
 /// Pure deterministic matching: takes a sealed batch, produces a trade bundle.
 ///
@@ -39,10 +39,9 @@ use crate::OrderBook;
 /// `batch_hash`), this function produces the **exact same** `TradeBundle`
 /// on every node — same trades, same trade_root, same clearing price.
 #[must_use]
+#[allow(clippy::too_many_lines)]
 pub fn match_sealed_batch(batch: &SealedBatch) -> TradeBundle {
-    let market = if let Some(first) = batch.orders.first() {
-        first.market.clone()
-    } else {
+    let Some(first) = batch.orders.first() else {
         // Empty batch → empty bundle
         return TradeBundle {
             epoch_id: batch.epoch_id,
@@ -53,6 +52,7 @@ pub fn match_sealed_batch(batch: &SealedBatch) -> TradeBundle {
             remaining_orders: vec![],
         };
     };
+    let market = first.market.clone();
 
     // 1. Build the order book from the sealed batch
     let mut book = OrderBook::new(market);
@@ -68,20 +68,17 @@ pub fn match_sealed_batch(batch: &SealedBatch) -> TradeBundle {
     // 2. Compute the clearing price
     let clearing = compute_clearing_price(&book);
 
-    let clearing_price = match clearing.clearing_price {
-        Some(p) => p,
-        None => {
-            // No crossing: all orders remain unmatched
-            let remaining = book.drain_all();
-            return TradeBundle {
-                epoch_id: batch.epoch_id,
-                trades: vec![],
-                trade_root: compute_trade_root(&[]),
-                input_hash: batch.batch_hash,
-                clearing_price: None,
-                remaining_orders: remaining,
-            };
-        }
+    let Some(clearing_price) = clearing.clearing_price else {
+        // No crossing: all orders remain unmatched
+        let remaining = book.drain_all();
+        return TradeBundle {
+            epoch_id: batch.epoch_id,
+            trades: vec![],
+            trade_root: compute_trade_root(&[]),
+            input_hash: batch.batch_hash,
+            clearing_price: None,
+            remaining_orders: remaining,
+        };
     };
 
     // 3. Walk crossing orders and produce trades
@@ -173,7 +170,9 @@ pub fn match_sealed_batch(batch: &SealedBatch) -> TradeBundle {
     for order in all_remaining {
         // Only add orders that weren't already included in bids/asks
         if !remaining.iter().any(|o| o.id == order.id)
-            && !trades.iter().any(|t| t.taker_order_id == order.id || t.maker_order_id == order.id)
+            && !trades
+                .iter()
+                .any(|t| t.taker_order_id == order.id || t.maker_order_id == order.id)
         {
             remaining.push(order);
         }
@@ -253,10 +252,7 @@ mod tests {
 
         let batch = make_sealed_batch(vec![buy, sell]);
         let bundle = match_sealed_batch(&batch);
-        assert!(
-            bundle.trades.is_empty(),
-            "Self-trade should be prevented"
-        );
+        assert!(bundle.trades.is_empty(), "Self-trade should be prevented");
     }
 
     #[test]
@@ -329,7 +325,10 @@ mod tests {
             Order::dummy_limit(OrderSide::Sell, Decimal::new(100, 0), Decimal::ONE),
         ]);
         let bundle = match_sealed_batch(&batch);
-        assert_ne!(bundle.trade_root, [0u8; 32], "Trade root should not be zero");
+        assert_ne!(
+            bundle.trade_root, [0u8; 32],
+            "Trade root should not be zero"
+        );
     }
 
     #[test]
