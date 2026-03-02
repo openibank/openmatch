@@ -57,4 +57,5 @@ sdk/python/dist/
 .prompt/system/*
 !.prompt/system/.gitkeep
 .prompts/
-
+# Prompt assets should never be committed
+.prompt/
